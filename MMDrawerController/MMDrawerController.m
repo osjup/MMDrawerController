@@ -334,9 +334,21 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
     [self openDrawerSide:drawerSide animated:animated velocity:self.animationVelocity animationOptions:UIViewAnimationOptionCurveEaseInOut completion:completion];
 }
 
+-(void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [_dummyStatusBarView setHidden:[[self childViewControllerForSide:MMDrawerSideNone] prefersStatusBarHidden] || self.openSide == MMDrawerSideNone];
+    UIViewController* childViewController = [self childViewControllerForSide:MMDrawerSideNone];
+        [childViewController setNeedsFocusUpdate];
+        [childViewController.view layoutIfNeeded];
+        [childViewController.view layoutSubviews];
+        [childViewController setNeedsStatusBarAppearanceUpdate];
+    
+}
+
+
 -(void)openDrawerSide:(MMDrawerSide)drawerSide animated:(BOOL)animated velocity:(CGFloat)velocity animationOptions:(UIViewAnimationOptions)options completion:(void (^)(BOOL finished))completion{
     NSParameterAssert(drawerSide != MMDrawerSideNone);
-    [_dummyStatusBarView setHidden:NO];
+    
+    [_dummyStatusBarView setHidden:[[self childViewControllerForSide:MMDrawerSideNone] prefersStatusBarHidden]];
     CGRect currentFram = _dummyStatusBarView.frame;
     if (self.isAnimatingDrawer) {
         if(completion){
@@ -771,6 +783,7 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
 -(void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration{
     [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
     //If a rotation begins, we are going to cancel the current gesture and reset transform and anchor points so everything works correctly
+    
     BOOL gestureInProgress = NO;
     for(UIGestureRecognizer * gesture in self.view.gestureRecognizers){
         if(gesture.state == UIGestureRecognizerStateChanged){
@@ -782,6 +795,8 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
             [self resetDrawerVisualStateForDrawerSide:self.openSide];
         }
     }
+    
+   [self closeDrawerAnimated:true completion:NULL];
     if ([self needsManualForwardingOfRotationEvents]){
         for(UIViewController * childViewController in self.childViewControllers){
             [childViewController willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
@@ -1090,6 +1105,8 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
             }
             else {
                 self.startingPanRect = self.centerContainerView.frame;
+                [_dummyStatusBarView setHidden:[[self childViewControllerForSide:MMDrawerSideNone] prefersStatusBarHidden]];
+
             }
         }
         case UIGestureRecognizerStateChanged:{
@@ -1122,6 +1139,8 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
                 [self prepareToPresentDrawer:visibleSide animated:NO];
                 [visibleSideDrawerViewController endAppearanceTransition];
                 [self setOpenSide:visibleSide];
+                [_dummyStatusBarView setHidden:[[self childViewControllerForSide:MMDrawerSideNone] prefersStatusBarHidden]];
+
             }
             else if(visibleSide == MMDrawerSideNone){
                 [self setOpenSide:MMDrawerSideNone];
@@ -1143,6 +1162,10 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
             self.startingPanRect = CGRectNull;
             CGPoint velocity = [panGesture velocityInView:self.childControllerContainerView];
             [self finishAnimationForPanGestureWithXVelocity:velocity.x completion:^(BOOL finished) {
+                if (self.openSide == MMDrawerSideNone) {
+                    [_dummyStatusBarView setHidden:YES];
+                }
+
                 if(self.gestureCompletion){
                     self.gestureCompletion(self, panGesture);
                 }
