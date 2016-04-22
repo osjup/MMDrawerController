@@ -336,12 +336,6 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
 
 -(void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
     [_dummyStatusBarView setHidden:[[self childViewControllerForSide:MMDrawerSideNone] prefersStatusBarHidden] || self.openSide == MMDrawerSideNone];
-    UIViewController* childViewController = [self childViewControllerForSide:MMDrawerSideNone];
-        [childViewController setNeedsFocusUpdate];
-        [childViewController.view layoutIfNeeded];
-        [childViewController.view layoutSubviews];
-        [childViewController setNeedsStatusBarAppearanceUpdate];
-    
 }
 
 
@@ -1037,7 +1031,6 @@ static NSString *MMDrawerOpenSideKey = @"MMDrawerOpenSide";
 
             
             [_childControllerContainerView addSubview:self.dummyStatusBarView];
-            [self.dummyStatusBarView setBackgroundColor:[UIColor blueColor]];
             [self.view addSubview:_childControllerContainerView];
             [_childControllerContainerView bringSubviewToFront:_dummyStatusBarView];
         }
